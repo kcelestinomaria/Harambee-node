@@ -1,0 +1,21 @@
+version: "3.2"
+
+services:
+  harambee-node:
+    container_name: harambee-node
+    image: harambeenetwork/harambee-node:local-test-net
+    # paritytech/ci-linux:974ba3ac-20201006
+    working_dir: /var/www/node-template
+    ports:
+      - "9944:9944"
+      - "9933:9933"
+      - "30333:30333"
+    command: bash -c "/harambee-node --dev --ws-external --rpc-external --rpc-methods
+    environment:
+      - CARGO_HOME=/var/www/node-template/.cargo
+    volumes:
+      - .:/var/www/node-template
+      - type: bind
+        source: ./.local
+        target: /root/.local
+    command: bash -c "cargo build --release && ./target/release/node-template --dev --ws-external"
