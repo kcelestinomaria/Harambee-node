@@ -1,4 +1,4 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(not(feature = "std"), no_std)]// we use no_std when we are// not using the std feature
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit="256"]
 
@@ -228,6 +228,7 @@ impl pallet_timestamp::Config for Runtime {
 
 parameter_types! {
 	pub const ExistentialDeposit: u128 = 500;
+	// A heuristic that is used for weight estimation
 	pub const MaxLocks: u32 = 50;
 }
 
@@ -279,8 +280,8 @@ construct_runtime!(
 		Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Module, Storage},
 		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
-		// Include the custom logic from the template pallet in the runtime.
-		TemplateModule: pallet_template::{Module, Call, Storage, Event<T>},
+		// Include the custom logic from the template pallet in the runtime. Added the nicks pallet for this case
+		Nicks: pallet_nicks::{Module, Call, Storage, Event<T>},
 	}
 );
 
@@ -488,4 +489,35 @@ impl_runtime_apis! {
 			Ok(batches)
 		}
 	}
+}
+
+parameter_types! {
+    // Choose a fee that incentivizes desirable behaviour.
+    pub const NickReservationFee: u18 = 100;
+    pub const MinNickLength: usize = 8;
+    // Maximum bounds on storage are important to secure your chain
+    pub const MaxNickLength: usize = 32;
+}
+
+impl pallet_nicks::Config for Runtime {
+     type Currency = pallet_balances::Modules<Runtime>;
+
+     // Use the NickReservationFee from the parameter_types block
+     type ReservationFee = NickReservationFee;
+
+     // No action is taken when deposits are forfeited.
+     type Slashed = ();
+
+     // Configure the FRAME System Root origin as the Nick pallet admin    //// https://substrate.dev/rustdocs/v3.0.0/frame_system/enum.RawOrigin.html#variant.Root
+     type ForceOrigin = frame_system::EnsureRoot<AccountId>;
+
+     // Use the MinNickLength from the parameter_types block
+     type MinLength = MinNickLength;
+
+     // Use the MaxNickLength from the parameter_types block.
+     type MaxLength = MaxNickLength;
+
+     // The ubiquitous event type
+     type Event = Event;
+
 }
